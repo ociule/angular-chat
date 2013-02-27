@@ -1,24 +1,42 @@
 <!doctype html>
-<html lang="en" ng-app="myApp">
+<html lang="en" ng-app="myChatApp">
 <head>
   <meta charset="utf-8">
-  <title>My AngularJS App</title>
+  <title>Angular Chat</title>
+  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.no-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="css/app.css"/>
 </head>
 <body>
-  <ul class="menu">
-    <li><a href="#/view1">view1</a></li>
-    <li><a href="#/view2">view2</a></li>
-  </ul>
+<div class="navbar navbar-fixed-top">
+  <div class="navbar-inner">
+    <div class="container-fluid">
+      <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="brand" href="#">Angular Chat</a>
+       
+      <div class="nav-collapse collapse">
+        <ul class="nav">
+          <li><a href="#/main">Main</a></li>
+        </ul>
+      </div>
+    </div>
+    </div>
+  </div>
+  </div>
+</div>
+  
+<div class="container-fluid top-space-fix"></div>
 
-  <div ng-view></div>
+<div ng-view class="container-fluid"></div>
 
-  <div>Angular seed app: v<span app-version></span></div>
+<footer class="footer">
+  <div class="container">Angular chat: v<span app-version></span></div>
+</footer>
 
-  <!-- In production use:
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
-  -->
-  <script src="lib/angular/angular.js"></script>
   <script src="js/app.js"></script>
   <script src="js/services.js"></script>
   <script src="js/controllers.js"></script>
