@@ -3,7 +3,7 @@
 /* Controllers */
 
 
-function MainCtrl() {}
+function RoomCtrl() {}
 MainCtrl.$inject = [];
 
 
