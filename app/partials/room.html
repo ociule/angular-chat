@@ -2,7 +2,7 @@
     <section id="people" class="span3">
       <ul class="nav nav-list affix">
       <h3>People</h3>
-      <li>Nobody</li>
+      <li ng-repeat="user in users"><span class="label label-info">{{ user }}</span></li>
       </ul>
     </section>
     <section id="messages" class="span8">
