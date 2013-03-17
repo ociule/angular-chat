@@ -1,33 +1,42 @@
 // Keep track of which names are used so that there are no duplicates
-var userNames = (function () {
+var userNamesByRoom = (function () {
   var names = {};
 
-  var claim = function (name) {
-    if (!name || names[name]) {
+  var claim = function (name, room) {
+    var found = false;
+    for (room in names) {
+      if (names[room][name]) {
+        found = true;
+        break;
+      }
+    }
+    if (!name || found) {
       return false;
     } else {
-      names[name] = true;
+      if (!names[room]) names[room] = {}
+      names[room][name] = true;
       return true;
     }
   };
 
   // find the lowest unused "guest" name and claim it
-  var getGuestName = function () {
+  var getGuestName = function (room) {
     var name,
       nextUserId = 1;
 
     do {
       name = 'Guest ' + nextUserId;
       nextUserId += 1;
-    } while (!claim(name));
+    } while (!claim(name, room));
 
     return name;
   };
 
   // serialize claimed names as an array
-  var get = function () {
+  var get = function (room) {
+    if (!room) { console.log("userNamesByRoom.get without room parameter"); return []; }
     var res = [];
-    for (user in names) {
+    for (user in names[room]) {
       res.push(user);
     }
 
@@ -35,9 +44,11 @@ var userNames = (function () {
   };
 
   var free = function (name) {
-    if (names[name]) {
-      delete names[name];
-    }
+    for (room in names)
+      if (names[room][name]) {
+        delete names[room][name];
+        return;
+      }
   };
 
   return {
@@ -50,32 +61,68 @@ var userNames = (function () {
 
 // export function for listening to the socket
 module.exports = function (socket) {
-  var name = userNames.getGuestName();
+  var room = 'main';
+  var name = userNamesByRoom.getGuestName(room);
 
-  // send the new user their name and a list of users
+  // send the new user their name and a default room 
   socket.emit('init', {
     name: name,
-    users: userNames.get()
+    room: room,
+    users: userNamesByRoom.get(room)
   });
 
   // notify other clients that a new user has joined
   socket.broadcast.emit('user:join', {
-    name: name
+    name: name,
+    room: room,
+    users: userNamesByRoom.get(room)
   });
 
-  // broadcast a user's message to other users
   socket.on('send:message', function (data) {
     socket.broadcast.emit('send:message', {
-      user: name,
-      text: data.message
+        user: name,
+        text: data.message,
+        room: room
     });
   });
 
+  socket.on('need:init', function () {
+    socket.emit('init', {
+      name: name,
+      room: room,
+    }); 
+  });
+
+  // broadcast a user's message to other users
+  socket.on('room:move', function (data) {
+    var oldRoom = room;
+    room = data.newRoom;
+    
+    if (room != oldRoom) {
+        userNamesByRoom.free(name);
+        userNamesByRoom.claim(name, room);
+    }
+    socket.emit('room:move:ack', {
+      room: room,
+      users: userNamesByRoom.get(room)
+    });
+
+    if (room != oldRoom) {
+      socket.broadcast.emit('user:left', {
+        user: name,
+        room: oldRoom,
+        users: userNamesByRoom.get(oldRoom)
+      });
+    }
+  });
+
+  // broadcast a user's message to other users
+
   // validate a user's name change, and broadcast it on success
   socket.on('change:name', function (data, fn) {
-    if (userNames.claim(data.name)) {
+    if (userNamesByRoom.claim(data.name, room)) {
       var oldName = name;
-      userNames.free(oldName);
+      userNamesByRoom.free(oldName);
 
       name = data.name;
       
@@ -93,8 +140,10 @@ module.exports = function (socket) {
   // clean up when a user leaves, and broadcast it to other users
   socket.on('disconnect', function () {
     socket.broadcast.emit('user:left', {
-      name: name
+      user: name,
+      room: room,
+      users: userNamesByRoom.get(room)
     });
-    userNames.free(name);
+    userNamesByRoom.free(name);
   });
 };

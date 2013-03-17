@@ -2,12 +2,13 @@
     <section id="people" class="span3">
       <ul class="nav nav-list affix">
       <h3>People</h3>
-      <li ng-repeat="user in users"><span class="label label-info">{{ user }}</span></li>
+      <li ng-repeat="user in users"><span class="label label-{{ (user == name) && 'success' || 'info'}}">{{ user }}</span></li>
       </ul>
     </section>
     <section id="messages" class="span8">
+      <h3>{{ room }} - {{ name }}</h3>
       <p><span class="label">Nobody said anything yet. Don't be shy, start!</span></p>
-      <p ng-repeat="message in messages"><span class="label label-info">{{ message.user }}</span> {{ message.text }}</p>
+      <p ng-repeat="message in messages"><span class="label label-{{ (message.user == name) && 'success' || 'info'}}">{{ message.user }}</span> {{ message.text }}</p>
     </section>
   </div>
   <div class="row-fluid">

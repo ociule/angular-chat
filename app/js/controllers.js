@@ -3,15 +3,44 @@
 /* Controllers */
 
 
-function RoomCtrl($scope, socket) {
-  console.log("Starting ...")
+function RoomCtrl($scope, $routeParams, socket) {
+  $scope.room = $routeParams.id;
+
+  console.log("Starting room "+ $scope.room +" ...")
+
 
   socket.on('init', function (data) {
+    console.log("init \""+ data.name +"\" "+data.room);
     $scope.name = data.name;
+
+    // Tell the server we want to be in this room
+    socket.emit('room:move', {
+      newRoom: $scope.room
+      });
+    console.log("room:move "+ $scope.room);
+
+  });
+
+  if ($scope.name) {
+    // Tell the server we want to be in this room
+    socket.emit('room:move', {
+      newRoom: $scope.room
+      });
+    console.log("room:move "+ $scope.room +" "+ $scope.name);
+  } else {
+    console.log("need:init");
+    socket.emit('need:init');
+  }
+
+
+  socket.on('room:move:ack', function (data) {
+    console.log("room:move:ack "+ data.room +" with "+data.users.length+" users");
+    $scope.room = data.room;
     $scope.users = data.users;
   });
 
   socket.on('send:message', function (message) {
+    if (message.room == $scope.room)
     $scope.messages.push(message);
   });
 
@@ -24,23 +53,18 @@ function RoomCtrl($scope, socket) {
       user: 'chatroom',
       text: 'User ' + data.name + ' has joined.'
     });
-    $scope.users.push(data.name);
+    $scope.users = data.users;
   });
 
   // add a message to the conversation when a user disconnects or leaves the room
   socket.on('user:left', function (data) {
+    console.log("user:left " + data.user + " from room " + data.room);
+    if ($scope.room != data.room) return;
     $scope.messages.push({
       user: 'chatroom',
-      text: 'User ' + data.name + ' has left.'
+      text: 'User ' + data.user + ' has left.'
     });
-    var i, user;
-    for (i = 0; i < $scope.users.length; i++) {
-      user = $scope.users[i];
-      if (user === data.name) {
-        $scope.users.splice(i, 1);
-        break;
-      }
-    }
+    $scope.users = data.users;
   });
 
   // Private helpers
