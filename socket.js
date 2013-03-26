@@ -87,9 +87,11 @@ module.exports = function (socket) {
   });
 
   socket.on('need:init', function () {
+    console.log("need:init from " + name +" for "+ room);
     socket.emit('init', {
       name: name,
       room: room,
+      users: userNamesByRoom.get(room)
     }); 
   });
 

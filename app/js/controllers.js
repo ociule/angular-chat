@@ -5,9 +5,13 @@
 
 function RoomCtrl($scope, $routeParams, socket) {
   $scope.room = $routeParams.id;
-
+  var enabled = true;
   console.log("Starting room "+ $scope.room +" ...")
 
+  $scope.$on("$destroy", function () { console.log("bye bye " + $scope.room); enabled = false; });
+  var old_socket_on = socket.on;
+
+  socket.on = function(eventName, callback) { if (enabled) old_socket_on(eventName, callback); }
 
   socket.on('init', function (data) {
     console.log("init \""+ data.name +"\" "+data.room);
@@ -18,19 +22,16 @@ function RoomCtrl($scope, $routeParams, socket) {
       newRoom: $scope.room
       });
     console.log("room:move "+ $scope.room);
-
   });
 
-  if ($scope.name) {
-    // Tell the server we want to be in this room
-    socket.emit('room:move', {
-      newRoom: $scope.room
-      });
-    console.log("room:move "+ $scope.room +" "+ $scope.name);
-  } else {
-    console.log("need:init");
-    socket.emit('need:init');
+  function need_init() {
+    if (!$scope.name) {
+      console.log("need:init");
+      socket.emit('need:init', {});
+    }
   }
+  // Wait a sec before sending need:init
+  setTimeout(need_init, 1000);
 
 
   socket.on('room:move:ack', function (data) {
@@ -122,9 +123,4 @@ function RoomCtrl($scope, $routeParams, socket) {
   };  
 
 }
-//RoomCtrl.$inject = [];
-
-
-function MyCtrl2() {
-}
-MyCtrl2.$inject = [];
+//RoomCtrl.$inject = ['$routeParams', 'socket'];

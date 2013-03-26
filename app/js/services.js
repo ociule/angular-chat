@@ -5,11 +5,17 @@
 
 // Demonstrate how to register services
 // In this case it is a simple value service.
-angular.module('myChatApp.services', []).
-  value('version', '0.1');
-
-angular.module('myChatApp.services').factory('socket', function ($rootScope) {
+var services = angular.module('myChatApp.services', []);
+services.value('version', '0.1');
+services.factory('socket', function ($rootScope) {
+  console.log("Initializing socket.io");
+  var controllers = [];
   var socket = io.connect();
+  socket.on('init', function (data) {
+    console.log("init2 \""+ data.name +"\" "+data.room);
+  });
+
+
   return {
     on: function (eventName, callback) {
       socket.on(eventName, function () {  
@@ -28,6 +34,9 @@ angular.module('myChatApp.services').factory('socket', function ($rootScope) {
           }
         });
       })
+    },
+    register: function (controller) {
+      controllers.push(controller);
     }
   };
 });
